@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    restart: always
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: secret
+
+  mongodb-run-migrations:
+    build:
+      context: ./migrations
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: secret
+      MONGO_URI: "mongodb://mongodb:27017"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+  
+  server:
+    build:
+      context: ./server
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_USERNAME: admin
+      MONGO_PASSWORD: secret
+      MONGO_URI: "mongodb://mongodb:27017"
+    depends_on:
+      - mongodb
+      - mongodb-run-migrations
+        
+volumes:
+  mongodb_data: 

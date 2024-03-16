@@ -1,16 +1,23 @@
 package storage
 
 import (
-	"errors"
+	"context"
 	"main/types"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Config struct{}
+type Config struct {
+	Username string
+	Password string
+	Uri      string
+}
 
 type Database struct {
 	Config Config
+	Client *mongo.Client
 
 	// For testing
 	Tasks []types.Task
@@ -26,28 +33,19 @@ func NewDatabase(config Config) *Database {
 		{Id: uuid.NewString(), Name: "My bar task", Description: "lorem ipsum lalala"},
 	}
 
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(config.Uri))
+	if err != nil {
+		panic(err)
+	}
+
 	return &Database{
 		Config: config,
-		Tasks:  tasks,
+		Client: client,
+
+		Tasks: tasks,
 	}
 }
 
-func (d *Database) GetAllTasks() ([]types.Task, error) {
-	return d.Tasks, nil
-}
-
-func (d *Database) GetTaskById(id string) (types.Task, error) {
-	for _, task := range d.Tasks {
-		if task.Id == id {
-			return task, nil
-		}
-	}
-
-	return types.Task{}, errors.New("Task not found")
-}
-
-func (d *Database) CreateTask(task types.Task) error {
-	d.Tasks = append(d.Tasks, task)
-
-	return nil
+func (db *Database) GetDatabase() *mongo.Database {
+	return db.Client.Database("todo")
 }
