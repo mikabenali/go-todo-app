@@ -13,6 +13,7 @@ make run
 # Endpoint
 ```
 GET http://localhost:3000/tasks/
+GET http://localhost:3000/tasks/{id}
 POST http://localhost:3000/tasks/
 PUT http://localhost:3000/tasks/{id}
 DELETE http://localhost:3000/tasks/{id}
