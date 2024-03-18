@@ -23,18 +23,6 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
-  
-  server:
-    build:
-      context: ./server
-    ports:
-      - "3000:3000"
-    environment:
-      MONGO_URI: "mongodb://admin:secret@mongodb:27017/"
-      ENV: "PRODUCTION"
-    depends_on:
-      - mongodb
-      - mongodb-run-migrations
         
 volumes:
   mongodb_data: 

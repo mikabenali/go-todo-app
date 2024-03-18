@@ -5,34 +5,42 @@ import (
 	"fmt"
 	"os"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type Task struct {
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
+}
+
+// Not real migrations, just a data set to test the api
 func main() {
 	fmt.Println("Starting migration")
 
-	connString := fmt.Sprintf(
-		"mongodb://%s:%s@mongodb:27017/",
-		os.Getenv("MONGO_USERNAME"),
-		os.Getenv("MONGO_PASSWORD"),
-	)
-
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(connString))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(os.Getenv("MONGO_URI")))
 	if err != nil {
 		panic(err)
 	}
 
+	defer func() {
+		client.Disconnect(context.TODO())
+	}()
+
 	collection := client.Database("todo").Collection("tasks")
+	collection.DeleteMany(context.TODO(), bson.M{})
 
 	documentsToInsert := []interface{}{
-		Task{Name: "My first task", Description: "lorem ipsum lalala"},
-		Task{Name: "My second task", Description: "lorem ipsum lalala"},
-		Task{Name: "My third task", Description: "lorem ipsum lalala"},
-		Task{Name: "My other task", Description: "lorem ipsum lalala"},
-		Task{Name: "My foo task", Description: "lorem ipsum lalala"},
-		Task{Name: "My bar task", Description: "lorem ipsum lalala"},
+		Task{Name: "My first task", Description: "lorem ipsum"},
+		Task{Name: "My second task", Description: "lorem ipsum"},
+		Task{Name: "My third task", Description: "lorem ipsum"},
+		Task{Name: "My other task", Description: "lorem ipsum"},
+		Task{Name: "My foo task", Description: "lorem ipsum"},
+		Task{Name: "My bar task", Description: "lorem ipsum"},
 	}
 
-	collection.InsertMany(context.TODO(), documentsToInsert)
+	if _, err := collection.InsertMany(context.TODO(), documentsToInsert); err != nil {
+		panic(err)
+	}
 }

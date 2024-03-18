@@ -2,12 +2,14 @@ package api
 
 import (
 	"encoding/json"
+	"main/types"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (s *Server) getTasks(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetTasks(w http.ResponseWriter, r *http.Request) {
 	tasks, err := s.Storage.GetAllTasks()
 	if err != nil {
 		http.Error(w, "Tasks not found", http.StatusNotFound)
@@ -19,9 +21,14 @@ func (s *Server) getTasks(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) getTaskById(w http.ResponseWriter, r *http.Request) {
+func (s *Server) GetTaskById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	task, err := s.Storage.GetTaskById(id)
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	task, err := s.Storage.GetTaskById(objectId)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -31,10 +38,56 @@ func (s *Server) getTaskById(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("content-type", "aplication/json")
 	if err := json.NewEncoder(w).Encode(task); err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) CreateTask(w http.ResponseWriter, r *http.Request) {
+	newTask := types.TaskRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	task, err := s.Storage.CreateTask(&newTask)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Add("content-type", "aplication/json")
+	if err := json.NewEncoder(w).Encode(task); err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) UpdateTask(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	updatedTask := types.TaskRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&updatedTask); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
+	err = s.Storage.UpdateTask(updatedTask, objectId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 }
 
-func (s *Server) createTask(w http.ResponseWriter, r *http.Request) {}
-func (s *Server) updateTask(w http.ResponseWriter, r *http.Request) {}
-func (s *Server) deleteTask(w http.ResponseWriter, r *http.Request) {}
+func (s *Server) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	objectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := s.Storage.DeleteTask(objectId); err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+	}
+}

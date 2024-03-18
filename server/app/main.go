@@ -4,13 +4,17 @@ import (
 	"main/api"
 	"main/storage"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	if os.Getenv("MONGO_URI") == "" {
+		godotenv.Load()
+	}
+
 	dbConfig := storage.Config{
-		Username: os.Getenv("MONGO_USERNAME"),
-		Password: os.Getenv("MONGO_PASSWORD"),
-		Uri:      os.Getenv("MONGO_URI"),
+		Uri: os.Getenv("MONGO_URI"),
 	}
 	storage := storage.NewDatabase(dbConfig)
 

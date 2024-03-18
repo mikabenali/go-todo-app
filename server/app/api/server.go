@@ -31,11 +31,11 @@ func (s *Server) Start() error {
 	r.Use(middleware.RealIP)
 
 	r.Route("/tasks", func(r chi.Router) {
-		r.Get("/", s.getTasks)
-		r.Get("/{id}", s.getTaskById)
-		r.Post("/", s.createTask)
-		r.Put("/{id}", s.updateTask)
-		r.Delete("/{id}", s.deleteTask)
+		r.Get("/", s.GetTasks)
+		r.Get("/{id}", s.GetTaskById)
+		r.Post("/", s.CreateTask)
+		r.Put("/{id}", s.UpdateTask)
+		r.Delete("/{id}", s.DeleteTask)
 	})
 
 	return http.ListenAndServe(":3000", r)
