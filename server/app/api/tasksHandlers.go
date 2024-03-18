@@ -98,11 +98,11 @@ func (s *Server) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	objectId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	if err := s.Storage.DeleteTask(objectId); err != nil {
-		http.Error(w, "Internal error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 }
